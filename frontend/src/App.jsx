@@ -1,7 +1,8 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import RootLayout from "./components/RootLayout";
 import RoleSelection from "./components/RoleSelection";
-import Dashboard from "./components/Dashboard";
+import UserDashboard from "./components/UserDashboard";
+import AuthorDashboard from "./components/AuthorDashboard";
 
 function App() {
   const browserRouterObj = createBrowserRouter([
@@ -14,8 +15,12 @@ function App() {
           element: <RoleSelection />,
         },
         {
-          path: "dashboard",
-          element: <Dashboard />,
+          path: "user-dashboard",
+          element: <UserDashboard />,
+        },
+        {
+          path: "author-dashboard",
+          element: <AuthorDashboard />,
         },
       ],
     },
