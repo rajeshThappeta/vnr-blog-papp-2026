@@ -41,8 +41,22 @@ function RoleSelection() {
         throw new Error(err.message || "Profile creation failed");
       }
 
+
+      let resBody = await res.json();
+
+      console.log("Data in role selection :",resBody)
+      //get role of existing user
+      let role = resBody.payload.role;
       // ✅ Profile saved → go to dashboard
-      navigate("/dashboard");
+      //if role is USER
+      if (role === "USER") {
+        //navigate to User dashboard
+        navigate("/user-dashboard");
+      } //if role is AUTHOR
+      else {
+        //navigate to Author dashbioard
+        navigate("/author-dashboard");
+      }
     } catch (err) {
       console.error(err);
       alert(err.message);

@@ -18,7 +18,7 @@ function Header() {
       try {
         //get token shared by clerk
         let token = await getToken();
-       // console.log("token :", token);
+        console.log("token :", token);
         //make HTTP GET req to read user from API
         let res = await fetch("http://localhost:4000/user-api/me", {
           headers: {
@@ -38,7 +38,7 @@ function Header() {
 
         //get role of existing user
         let role = data.payload.role;
-
+        console.log("role in header :",role)
         //if role is USER
         if (role === "USER") {
           //navigate to User dashboard
