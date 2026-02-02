@@ -1,11 +1,14 @@
 import { useForm } from "react-hook-form";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import { userContextObj } from "../contexts/AuthorContext";
 
 function RoleSelection() {
   const { getToken } = useAuth();
-  const { user, isLoaded } = useUser();
+  const { isLoaded } = useUser();
   const navigate = useNavigate();
+  const { setCurrentUser } = useContext(userContextObj);
 
   const {
     register,
@@ -21,7 +24,7 @@ function RoleSelection() {
     return <p>Loading...</p>;
   }
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (formData) => {
     try {
       const token = await getToken();
 
@@ -31,9 +34,7 @@ function RoleSelection() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          role: data.role,
-        }),
+        body: JSON.stringify({ role: formData.role }),
       });
 
       if (!res.ok) {
@@ -41,24 +42,19 @@ function RoleSelection() {
         throw new Error(err.message || "Profile creation failed");
       }
 
+      const resBody = await res.json();
 
-      let resBody = await res.json();
+      const role = resBody.payload.role;
 
-      console.log("Data in role selection :",resBody)
-      //get role of existing user
-      let role = resBody.payload.role;
-      // ✅ Profile saved → go to dashboard
-      //if role is USER
+      setCurrentUser(resBody.payload);
+
       if (role === "USER") {
-        //navigate to User dashboard
         navigate("/user-dashboard");
-      } //if role is AUTHOR
-      else {
-        //navigate to Author dashbioard
+      } else {
         navigate("/author-dashboard");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Role selection error:", err);
       alert(err.message);
     }
   };
@@ -73,27 +69,24 @@ function RoleSelection() {
           <input
             type="radio"
             value="USER"
-            {...register("role", {
-              required: "Please select a role",
-            })}
+            {...register("role", { required: "Please select a role" })}
           />
           User
         </label>
 
-        {/* ADMIN */}
+        {/* AUTHOR */}
         <label style={{ display: "block", marginBottom: 10 }}>
           <input
             type="radio"
             value="AUTHOR"
-            {...register("role", {
-              required: "Please select a role",
-            })}
+            {...register("role", { required: "Please select a role" })}
           />
           Author
         </label>
 
-        {/* Validation error */}
-        {errors.role && <p style={{ color: "red" }}>{errors.role.message}</p>}
+        {errors.role && (
+          <p style={{ color: "red" }}>{errors.role.message}</p>
+        )}
 
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Saving..." : "Continue"}

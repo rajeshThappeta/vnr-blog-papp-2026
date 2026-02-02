@@ -106,28 +106,41 @@ userRouter.get('/articles',async(req,res)=>{
 })
 
 //Add comment to an article
-userRouter.put('/comment/:articleId',async(req,res)=>{
+userRouter.put("/comment/:articleId", async (req, res) => {
+  const { userId } = getAuth(req);
 
-    const {userId}=getAuth(req)
-    if(!userId){
-      return res.status(410).json({message:"Authentication required"})
-    }
+  if (!userId) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
 
-    //get articleId from url param
-    let {articleId}=req.params
+  const { articleId } = req.params;
 
-    //get user from db
-    let user=await User.findOne({clerkUserId:userId})
-    //create comment doc
-    const commentObj={
-      user:user._id,
-      comment:req.body.comment
-    }
+  if (!req.body.comment || !req.body.comment.trim()) {
+    return res.status(400).json({ message: "Comment is required" });
+  }
 
-    //uodate article by adding comment to it
-    let article=await Article.findByIdAndUpdate(articleId,
-      {$push:{comment:commentObj}},
-      {new:true}).populate("comments.user","firstName")
+  const user = await User.findOne({ clerkUserId: userId });
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
 
-    res.status(200).json({message:"comment added",payload:article})
-})
+  const commentObj = {
+    user: user._id,
+    comment: req.body.comment,
+  };
+
+  const article = await Article.findByIdAndUpdate(
+    articleId,
+    { $push: { comments: commentObj } }, // ✅ FIXED
+    { new: true }
+  ).populate("comments.user", "firstName");
+
+  if (!article) {
+    return res.status(404).json({ message: "Article not found" });
+  }
+
+  res.status(200).json({
+    message: "comment added",
+    payload: article,
+  });
+});

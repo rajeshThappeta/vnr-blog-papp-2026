@@ -1,58 +1,66 @@
-import { SignedIn, SignedOut, SignInButton, UserButton, useAuth, useUser } from "@clerk/clerk-react";
-import { useEffect } from "react";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  UserButton,
+  useAuth,
+  useUser,
+} from "@clerk/clerk-react";
+import { useEffect, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { userContextObj } from "../contexts/AuthorContext";
 
 function Header() {
   const { isSignedIn, getToken } = useAuth();
-  const { user, isLoaded } = useUser();
+  const { isLoaded } = useUser();
   const navigate = useNavigate();
 
-  //Navigate to Dashboard after Login
+  const { setCurrentUser } = useContext(userContextObj);
+  const [checked, setChecked] = useState(false); // prevents reruns
 
   useEffect(() => {
-    //check user signin is success
-    if (!isSignedIn || !isLoaded) return;
+    if (!isSignedIn || !isLoaded || checked) return;
 
-    //check user in backend
     const checkUserAndNavigate = async () => {
       try {
-        //get token shared by clerk
-        let token = await getToken();
-        console.log("token :", token);
-        //make HTTP GET req to read user from API
-        let res = await fetch("http://localhost:4000/user-api/me", {
+        const token = await getToken();
+
+        const res = await fetch("http://localhost:4000/user-api/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-       
-        let data = await res.json();
-        console.log("data :",data)
-        //first time user login
+        if (!res.ok) {
+          throw new Error("Failed to fetch user profile");
+        }
+
+        const data = await res.json();
+
+        // First-time login
         if (data.firstLogin === true) {
-          //navigate to role selection component
           navigate("/role-selection");
           return;
         }
 
-        //get role of existing user
-        let role = data.payload.role;
-        console.log("role in header :",role)
-        //if role is USER
+        const role = data.payload.role;
+
+        setCurrentUser(data.payload);
+
         if (role === "USER") {
-          //navigate to User dashboard
           navigate("/user-dashboard");
-        } //if role is AUTHOR
-        else {
-          //navigate to Author dashbioard
+        } else {
           navigate("/author-dashboard");
         }
-      } catch (err) {}
+
+        setChecked(true);
+      } catch (err) {
+        console.error("Header auth check error:", err);
+      }
     };
 
-    checkUserAndNavigate()
-  }, [isSignedIn,isLoaded,navigate]);
+    checkUserAndNavigate();
+  }, [isSignedIn, isLoaded, getToken, navigate, setCurrentUser, checked]);
 
   return (
     <nav className="navbar navbar-light bg-light px-4">

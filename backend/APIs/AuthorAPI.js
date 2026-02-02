@@ -134,5 +134,5 @@ authorRouter.put("/articles/:articleId/edit", async (req, res) => {
     { new: true },
   );
 
-  res.status(200).json({message:"article updated",payload:updatedArticle})
+  res.status(200).json({ message: "article updated", payload: updatedArticle });
 });
