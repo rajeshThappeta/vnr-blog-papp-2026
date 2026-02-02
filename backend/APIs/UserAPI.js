@@ -104,3 +104,30 @@ userRouter.get('/articles',async(req,res)=>{
     payload:articles
   })
 })
+
+//Add comment to an article
+userRouter.put('/comment/:articleId',async(req,res)=>{
+
+    const {userId}=getAuth(req)
+    if(!userId){
+      return res.status(410).json({message:"Authentication required"})
+    }
+
+    //get articleId from url param
+    let {articleId}=req.params
+
+    //get user from db
+    let user=await User.findOne({clerkUserId:userId})
+    //create comment doc
+    const commentObj={
+      user:user._id,
+      comment:req.body.comment
+    }
+
+    //uodate article by adding comment to it
+    let article=await Article.findByIdAndUpdate(articleId,
+      {$push:{comment:commentObj}},
+      {new:true}).populate("comments.user","firstName")
+
+    res.status(200).json({message:"comment added",payload:article})
+})

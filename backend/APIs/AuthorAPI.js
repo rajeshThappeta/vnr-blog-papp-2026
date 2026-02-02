@@ -52,3 +52,87 @@ authorRouter.post("/article", async (req, res) => {
     payload: newArticle,
   });
 });
+
+//Read all articles
+authorRouter.get("/articles", async (req, res) => {
+  const { userId } = getAuth(req);
+  if (!userId) {
+    return res.status(401).json({ message: "Authentication reqiored" });
+  }
+  let user = await User.findOne({ clerkUserId: userId });
+
+  let role = user.role;
+  if (role !== "AUTHOR") {
+    return res.status(401).json({
+      error: "Forbidden",
+      message: "Only authors can update article",
+    });
+  }
+
+  //read atricles of author
+  let articles = await Article.find({ author: user._id });
+
+  //res
+  res.status(200).json({ message: "author articles", payload: articles });
+});
+
+//delete artcile(softwa delete)
+authorRouter.put("/articles/:articleId", async (req, res) => {
+  const { userId } = getAuth(req);
+  if (!userId) {
+    return res.status(401).json({ message: "Authentication reqiored" });
+  }
+  let user = await User.findOne({ clerkUserId: userId });
+
+  console.log("user:", user);
+  let role = user.role;
+  if (role !== "AUTHOR") {
+    return res.status(401).json({
+      error: "Forbidden",
+      message: "Only authors can update article",
+    });
+  }
+
+  let { articleId } = req.params;
+  let article = await Article.findOne({ _id: articleId });
+
+  article.isArticleActive = false;
+  await article.save();
+
+  res.status(200).json({ message: "article deleted" });
+});
+
+//update atricle by id
+authorRouter.put("/articles/:articleId/edit", async (req, res) => {
+  const { userId } = getAuth(req);
+  if (!userId) {
+    return res.status(401).json({ message: "Authentication reqiored" });
+  }
+  let user = await User.findOne({ clerkUserId: userId });
+
+  console.log("user:", user);
+  let role = user.role;
+  if (role !== "AUTHOR") {
+    return res.status(401).json({
+      error: "Forbidden",
+      message: "Only authors can update article",
+    });
+  }
+
+  let { articleId } = req.params;
+  let article = await Article.findOne({ _id: articleId });
+
+  let { title, content } = req.body;
+  let updatedArticle = await Article.findByIdAndUpdate(
+    articleId,
+    {
+      $set: {
+        ...(title && { title }),
+        ...(content && { content }),
+      },
+    },
+    { new: true },
+  );
+
+  res.status(200).json({message:"article updated",payload:updatedArticle})
+});
